@@ -1,0 +1,5 @@
+{
+  "editor.formatOnSave": false,
+  // 该项目用eslint格式化更合适
+  "editor.codeActionsOnSave": ["source.formatDocument", "source.fixAll.eslint"]
+}
