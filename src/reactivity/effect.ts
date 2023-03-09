@@ -5,11 +5,17 @@
  * @Description:
  */
 
+interface OptionModel {
+  scheduler?: Function;
+}
+
 class ReactiveEffect {
   private _fn: any;
+  private scheduler: any;
 
-  constructor(_fn) {
+  constructor(_fn, { scheduler }: OptionModel) {
     this._fn = _fn;
+    this.scheduler = scheduler;
   }
 
   run() {
@@ -41,13 +47,17 @@ export function trigger(target, key) {
   const dep = depsMap.get(key);
 
   for (const effect of dep) {
-    effect.run();
+    if (typeof effect.scheduler === "function") {
+      effect.scheduler();
+    } else {
+      effect.run();
+    }
   }
 }
 
 let activeEffect;
-export function effect(fn) {
-  const _effect = new ReactiveEffect(fn);
+export function effect(fn, option = {}) {
+  const _effect = new ReactiveEffect(fn, option);
   _effect.run();
   return _effect.run.bind(_effect);
 }

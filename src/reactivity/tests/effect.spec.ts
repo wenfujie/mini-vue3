@@ -34,4 +34,30 @@ describe("effect", () => {
     expect(runner()).toBe(3);
     expect(page).toBe(3);
   });
+
+  it("scheduler", () => {
+    const user = reactive({ age: 10 });
+    let run;
+    const scheduler = jest.fn(() => {
+      run = runner;
+    });
+
+    let nextAge;
+    const runner = effect(
+      () => {
+        nextAge = user.age + 1;
+      },
+      { scheduler }
+    );
+
+    expect(nextAge).toBe(11);
+    expect(scheduler).not.toHaveBeenCalled();
+
+    user.age++;
+    expect(scheduler).toHaveBeenCalledTimes(1);
+    expect(nextAge).toBe(11);
+
+    run();
+    expect(nextAge).toBe(12);
+  });
 });
