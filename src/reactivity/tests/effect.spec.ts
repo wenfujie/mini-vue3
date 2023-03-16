@@ -5,7 +5,7 @@
  * @Description:
  */
 
-import { effect } from "../effect";
+import { effect, stop } from "../effect";
 import { reactive } from "../reactive";
 
 describe("effect", () => {
@@ -59,5 +59,44 @@ describe("effect", () => {
 
     run();
     expect(nextAge).toBe(12);
+  });
+
+  it("stop", () => {
+    const user = reactive({ age: 1 });
+
+    let currAge;
+    const runner = effect(() => {
+      currAge = user.age;
+    });
+
+    expect(currAge).toBe(1);
+
+    user.age = 2;
+    expect(currAge).toBe(2);
+
+    stop(runner);
+    user.age = 3;
+    expect(currAge).toBe(2);
+
+    runner();
+    expect(currAge).toBe(3);
+  });
+
+  it("onStop", () => {
+    const user = reactive({ age: 1 });
+    const onStop = jest.fn();
+
+    let currAge;
+    const runner = effect(
+      () => {
+        currAge = user.age;
+      },
+      {
+        onStop,
+      }
+    );
+
+    stop(runner);
+    expect(onStop).toBeCalledTimes(1);
   });
 });

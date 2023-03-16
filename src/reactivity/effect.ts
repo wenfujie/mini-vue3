@@ -7,21 +7,36 @@
 
 interface OptionModel {
   scheduler?: Function;
+  onStop?: Function;
 }
 
 class ReactiveEffect {
   private _fn: any;
   private scheduler: any;
+  private onStop: any;
+  deps = [];
 
-  constructor(_fn, { scheduler }: OptionModel) {
+  constructor(_fn, { scheduler, onStop }: OptionModel) {
     this._fn = _fn;
     this.scheduler = scheduler;
+    this.onStop = onStop;
   }
 
   run() {
     activeEffect = this;
     return this._fn();
   }
+
+  stop() {
+    cleanupEffect(this);
+    this.onStop && this.onStop();
+  }
+}
+
+function cleanupEffect(effect) {
+  effect.deps.forEach((dep: any) => {
+    dep.delete(effect);
+  });
 }
 
 // 依赖收集
@@ -39,7 +54,10 @@ export function track(target, key) {
     depsMap.set(key, dep);
   }
 
+  if (!activeEffect) return;
+
   dep.add(activeEffect);
+  activeEffect.deps.push(dep);
 }
 
 export function trigger(target, key) {
@@ -59,5 +77,12 @@ let activeEffect;
 export function effect(fn, option = {}) {
   const _effect = new ReactiveEffect(fn, option);
   _effect.run();
-  return _effect.run.bind(_effect);
+
+  const runner: any = _effect.run.bind(_effect);
+  runner._effect = _effect;
+  return runner;
+}
+
+export function stop(runner) {
+  runner._effect.stop();
 }
